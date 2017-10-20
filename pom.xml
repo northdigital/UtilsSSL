@@ -34,9 +34,9 @@
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
+      <scope>provided</scope>
       <version>1.10</version>
     </dependency>
-
 
   </dependencies>
 
