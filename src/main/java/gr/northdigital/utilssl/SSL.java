@@ -1,10 +1,13 @@
 package gr.northdigital.utilssl;
 
+import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.openssl.PEMReader;
 
+import javax.crypto.Cipher;
 import java.io.*;
+import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.CertificateFactory;
@@ -16,6 +19,7 @@ import java.util.Enumeration;
 public class SSL {
   /**
    * Creates a certificate described by pem String parameter. The pem parameter must be in PEM format.
+   *
    * @param pem
    * @return
    * @throws IOException
@@ -31,6 +35,7 @@ public class SSL {
 
   /**
    * Loads a certificate from the file system.
+   *
    * @param filePath
    * @return
    * @throws Exception
@@ -50,6 +55,7 @@ public class SSL {
 
   /**
    * Loads a keystore from the file system.
+   *
    * @param filePath
    * @param password
    * @return
@@ -70,6 +76,7 @@ public class SSL {
 
   /**
    * Return true if the certificate is self signed.
+   *
    * @param x509Certificate
    * @return
    */
@@ -82,12 +89,13 @@ public class SSL {
 
   /**
    * Returns true if the certificate is self signed and valid.
+   *
    * @param x509Certificate
    * @return
    */
   public static boolean isSelfSignedCertificateValid(X509Certificate x509Certificate) {
     try {
-      if(!isSelfSignedCertificate(x509Certificate))
+      if (!isSelfSignedCertificate(x509Certificate))
         throw new Exception("The certificate is not self signed!");
 
       x509Certificate.verify(x509Certificate.getPublicKey());
@@ -100,6 +108,7 @@ public class SSL {
   /**
    * Returns true if the certificate can be validated against the supplied keyStore.
    * At the end of the certificate chain a self signed certificate is expended to be found.
+   *
    * @param x509Certificate
    * @param keyStore
    * @return
@@ -122,26 +131,24 @@ public class SSL {
 
     while (aliases.hasMoreElements()) {
       String nextElement = (String) aliases.nextElement();
-      if (keyStore.isCertificateEntry(nextElement)) {
-        X509Certificate nextCertificate = (X509Certificate) keyStore.getCertificate(nextElement);
+      X509Certificate nextCertificate = (X509Certificate) keyStore.getCertificate(nextElement);
 
-        String nextCertificateSubjectDN = nextCertificate.getSubjectDN().getName();
+      String nextCertificateSubjectDN = nextCertificate.getSubjectDN().getName();
 
-        if (nextCertificateSubjectDN.equals(issuerDN)) {
-          try {
-            if (isSelfSignedCertificate(nextCertificate)) {
-              if (!isSelfSignedCertificateValid(nextCertificate))
-                return false;
-            } else if (!isValidCertificate(nextCertificate, keyStore)) {
+      if (nextCertificateSubjectDN.equals(issuerDN)) {
+        try {
+          if (isSelfSignedCertificate(nextCertificate)) {
+            if (!isSelfSignedCertificateValid(nextCertificate))
               return false;
-            }
-
-            x509Certificate.verify(nextCertificate.getPublicKey());
-
-            return true;
-          } catch (Exception ex) {
+          } else if (!isValidCertificate(nextCertificate, keyStore)) {
             return false;
           }
+
+          x509Certificate.verify(nextCertificate.getPublicKey());
+
+          return true;
+        } catch (Exception ex) {
+          return false;
         }
       }
     }
@@ -152,6 +159,7 @@ public class SSL {
   /**
    * Returns true if the certificate can be validated against the supplied keyStore.
    * At the end of the certificate chain a self signed certificate is expended to be found.
+   *
    * @param certificatePath
    * @param keyStorePath
    * @param keyStorePassword
@@ -164,6 +172,7 @@ public class SSL {
 
   /**
    * Returns the value of the requested certificate extension.
+   *
    * @param x509Certificate
    * @param oid
    * @return
@@ -177,5 +186,33 @@ public class SSL {
     asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(asn1OctetString.getOctets()));
     String value = asn1InputStream.readObject().toString();
     return value;
+  }
+
+  public static String encryptTextWithKey(Key key, String text) {
+    byte[] cipherText = null;
+
+    try {
+      final Cipher cipher = Cipher.getInstance("RSA");
+      cipher.init(Cipher.ENCRYPT_MODE, key);
+      cipherText = cipher.doFinal(text.getBytes());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return Hex.encodeHexString(cipherText);
+  }
+
+  public static String decryptTextWithKey(Key key, String text) {
+    byte[] dectyptedText = null;
+    try {
+      final Cipher cipher = Cipher.getInstance("RSA");
+
+      cipher.init(Cipher.DECRYPT_MODE, key);
+      dectyptedText = cipher.doFinal(Hex.decodeHex(text.toCharArray()));
+
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+
+    return new String(dectyptedText);
   }
 }
