@@ -27,9 +27,10 @@ public class SSLTest {
     PublicKey pubKey = cer.getPublicKey();
     PrivateKey privateKey = (PrivateKey) keyStore.getKey("root", "sporades".toCharArray());
 
-    String encrypted = SSL.encryptTextWithKey(pubKey, "user1/_@#@_/password1/_@#@_key1");
+    String unencrypted = "user1 password1 key1";
+    String encrypted = SSL.encryptTextWithKey(pubKey, unencrypted);
     String decrypted = SSL.decryptTextWithKey(privateKey, encrypted);
 
-    Assert.assertTrue(true);
+    Assert.assertTrue(unencrypted.equals(decrypted));
   }
 }
