@@ -3,6 +3,8 @@ package gr.northdigital.utilssl;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.openssl.PEMParser;
 
 import javax.crypto.Cipher;
@@ -20,10 +22,11 @@ public class SSL {
    * @return
    * @throws IOException
    */
-  public static X509Certificate loadCertificateFromPemString(String pem) throws IOException {
+  public static X509Certificate loadCertificateFromPemString(String pem) throws IOException, CertificateException {
     StringReader reader = new StringReader(pem);
     PEMParser pemReader = new PEMParser(reader);
-    X509Certificate x509Certificate = (X509Certificate) pemReader.readObject();
+    X509CertificateHolder x509CertificateHolder = ((X509CertificateHolder)(pemReader.readObject()));
+    X509Certificate x509Certificate = new JcaX509CertificateConverter().setProvider( "BC" ).getCertificate(x509CertificateHolder);
     pemReader.close();
 
     return x509Certificate;
