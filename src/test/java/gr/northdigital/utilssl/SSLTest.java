@@ -1,11 +1,13 @@
 package gr.northdigital.utilssl;
 
+import org.apache.commons.codec.binary.Hex;
 import org.junit.Assert;
 import org.junit.Test;
 import sun.security.tools.keytool.CertAndKeyGen;
 import sun.security.x509.X500Name;
 
 import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import java.io.FileOutputStream;
 import java.security.*;
 import java.security.cert.X509Certificate;
@@ -40,14 +42,12 @@ public class SSLTest {
 
   @Test
   public void generateSymmetricKey() throws Exception {
-//    KeyGenerator aesKeyGen = KeyGenerator.getInstance("AES");
-//    aesKeyGen.init(256);
+    KeyGenerator aesKeyGen = KeyGenerator.getInstance("AES");
+    aesKeyGen.init(256);
 
-//    SecretKey secretKey = aesKeyGen.generateKey();
-//    byte[] raw = secretKey.getEncoded();
-//    String hexString = Hex.encodeHexString(raw);
-//    Key
-//    SSL.encryptTextWithKey()
+    SecretKey secretKey = aesKeyGen.generateKey();
+    byte[] raw = secretKey.getEncoded();
+    String hexString = Hex.encodeHexString(raw);
 
     SSL.createKeyStore(BASE_PATH + "test.jks", "sporades");
 
