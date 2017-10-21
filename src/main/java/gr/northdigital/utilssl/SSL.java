@@ -6,6 +6,7 @@ import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.openssl.PEMParser;
 
 import javax.crypto.Cipher;
+import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 import java.security.*;
 import java.security.cert.*;
@@ -258,5 +259,19 @@ public class SSL {
     X509Certificate x509Certificate = IntermediateCertBuilder.createIntermediateCert(publicKey, privateKey, caCertificate, name);
 
     return x509Certificate;
+  }
+
+  public static void saveCertificate(X509Certificate x509Certificate, String certFilePath) throws IOException {
+    FileWriter fw = new FileWriter(certFilePath);
+    StringWriter sw = new StringWriter();
+    try {
+      sw.write("-----BEGIN CERTIFICATE-----\n");
+      sw.write(DatatypeConverter.printBase64Binary(x509Certificate.getEncoded()).replaceAll("(.{64})", "$1\n"));
+      sw.write("\n-----END CERTIFICATE-----\n");
+    } catch (CertificateEncodingException e) {
+      e.printStackTrace();
+    }
+    fw.write(sw.toString());
+    fw.close();
   }
 }
