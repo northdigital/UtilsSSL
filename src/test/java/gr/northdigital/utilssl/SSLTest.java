@@ -42,14 +42,19 @@ public class SSLTest {
 
   @Test
   public void generateSymmetricKey() throws Exception {
-    KeyGenerator aesKeyGen = KeyGenerator.getInstance("AES");
-    aesKeyGen.init(256);
+//    KeyGenerator aesKeyGen = KeyGenerator.getInstance("AES");
+//    aesKeyGen.init(256);
+//
+//    SecretKey secretKey = aesKeyGen.generateKey();
+//    byte[] raw = secretKey.getEncoded();
+//    String hexString = Hex.encodeHexString(raw);
 
-    SecretKey secretKey = aesKeyGen.generateKey();
-    byte[] raw = secretKey.getEncoded();
-    String hexString = Hex.encodeHexString(raw);
+    KeyStore keyStore = SSL.createKeyStore(BASE_PATH + "test.jks", "sporades");
+    SSL.addKeyPair(keyStore, "user1", "sporades", 100);
+    SSL.saveKeyStore(keyStore,BASE_PATH + "test.jks", "sporades");
 
-    SSL.createKeyStore(BASE_PATH + "test.jks", "sporades");
+    //KeyStore keyStore = SSL.loadKeyStoreFromFile(BASE_PATH + "test.jks", "sporades");
+    //Key key = keyStore.getKey("root.PK", "sporades".toCharArray());
 
     Assert.assertTrue(true);
   }

@@ -214,28 +214,36 @@ public class SSL {
     return new String(dectyptedText);
   }
 
-  public static KeyStore createKeyStore(String path, String password) throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException, InvalidKeyException, NoSuchProviderException, SignatureException {
+  public static void saveKeyStore(KeyStore keyStore, String path, String password) throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException {
+    FileOutputStream fileOutputStream = new FileOutputStream(path);
+    keyStore.store(fileOutputStream, password.toCharArray());
+    fileOutputStream.close();
+  }
+
+  public static void addKeyPair(KeyStore keyStore, String name, String password, int validity) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, IOException, CertificateException, SignatureException, KeyStoreException {
+    CertAndKeyGen certAndKeyGen = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
+    certAndKeyGen.generate(512);
+
+    X509Certificate[] chain = new X509Certificate[1];
+    X500Name x500Name = new X500Name(name + ".ca", "", "", "", "", "");
+    chain[0] = certAndKeyGen.getSelfCertificate(x500Name, new Date(), (long) validity * 365 * 24 * 60 * 60);
+
     KeyPairGenerator rsaKeyGen = KeyPairGenerator.getInstance("RSA");
     SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG", "SUN");
     rsaKeyGen.initialize(512, secureRandom);
     KeyPair keyPair = rsaKeyGen.genKeyPair();
 
-    CertAndKeyGen certAndKeyGen = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
-    certAndKeyGen.generate(512);
+    keyStore.setKeyEntry(name + ".pk", keyPair.getPrivate(), password.toCharArray(), chain);
+  }
 
-    X509Certificate[] chain = new X509Certificate[1];
-    X500Name x500Name = new X500Name("root.CA", "", "", "", "", "");
-    chain[0] = certAndKeyGen.getSelfCertificate(x500Name, new Date(), (long) 100000 * 24 * 60 * 60);
-
+  public static KeyStore createKeyStore(String path, String password) throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException, InvalidKeyException, NoSuchProviderException, SignatureException {
     KeyStore keyStore;
     keyStore = KeyStore.getInstance("JKS");
     keyStore.load(null);
 
-    keyStore.setKeyEntry("root.pk", keyPair.getPrivate(), "sporades".toCharArray(), chain);
+    addKeyPair(keyStore, "root", "sporades", 100);
 
-    FileOutputStream out = new FileOutputStream("C:\\Users\\Panagiotis\\Desktop\\ssl\\test.jks");
-    keyStore.store(out, "sporades".toCharArray());
-    out.close();
+    saveKeyStore(keyStore, path, password);
 
     return keyStore;
   }
