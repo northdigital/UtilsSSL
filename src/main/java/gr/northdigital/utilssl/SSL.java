@@ -3,15 +3,12 @@ package gr.northdigital.utilssl;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1OctetString;
-import org.bouncycastle.openssl.PEMReader;
-import sun.security.tools.keytool.CertAndKeyGen;
-import sun.security.x509.X500Name;
+import org.bouncycastle.openssl.PEMParser;
 
 import javax.crypto.Cipher;
 import java.io.*;
 import java.security.*;
 import java.security.cert.*;
-import java.util.Date;
 import java.util.Enumeration;
 
 public class SSL {
@@ -24,7 +21,7 @@ public class SSL {
    */
   public static X509Certificate loadCertificateFromPemString(String pem) throws IOException {
     StringReader reader = new StringReader(pem);
-    PEMReader pemReader = new PEMReader(reader);
+    PEMParser pemReader = new PEMParser(reader);
     X509Certificate x509Certificate = (X509Certificate) pemReader.readObject();
     pemReader.close();
 
@@ -220,29 +217,26 @@ public class SSL {
     fileOutputStream.close();
   }
 
-  public static void addKeyPair(KeyStore keyStore, String name, String password, int validity) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, IOException, CertificateException, SignatureException, KeyStoreException {
-    CertAndKeyGen certAndKeyGen = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
-    certAndKeyGen.generate(512);
-
+  public static void addKeyPair(KeyStore keyStore, String name, String password) throws Exception {
     X509Certificate[] chain = new X509Certificate[1];
-    X500Name x500Name = new X500Name(name + ".ca", "", "", "", "", "");
-    chain[0] = certAndKeyGen.getSelfCertificate(x500Name, new Date(), (long) validity * 365 * 24 * 60 * 60);
 
     KeyPairGenerator rsaKeyGen = KeyPairGenerator.getInstance("RSA");
     SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG", "SUN");
-    rsaKeyGen.initialize(512, secureRandom);
+    rsaKeyGen.initialize(4096, secureRandom);
     KeyPair keyPair = rsaKeyGen.genKeyPair();
+
+    X509Certificate x509Certificate = CACertBuilder.createCACert(keyPair.getPublic(), keyPair.getPrivate(), name);
+    chain[0] = x509Certificate;
 
     keyStore.setKeyEntry(name + ".pk", keyPair.getPrivate(), password.toCharArray(), chain);
   }
 
-  public static KeyStore createKeyStore(String path, String password) throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException, InvalidKeyException, NoSuchProviderException, SignatureException {
+  public static KeyStore createKeyStore(String path, String password) throws Exception {
     KeyStore keyStore;
     keyStore = KeyStore.getInstance("JKS");
     keyStore.load(null);
 
-    addKeyPair(keyStore, "root", "sporades", 100);
-
+    addKeyPair(keyStore, "root", "sporades");
     saveKeyStore(keyStore, path, password);
 
     return keyStore;
