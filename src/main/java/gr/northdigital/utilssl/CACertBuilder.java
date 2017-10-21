@@ -55,28 +55,27 @@ public class CACertBuilder {
    * Create a certificate to use by a Certificate Authority, signed by a self signed certificate.
    */
   public static X509Certificate createCACert(PublicKey publicKey, PrivateKey privateKey, String name) throws Exception {
-
     X500Name issuerName = new X500Name("CN=" + name + ".ca");
     X500Name subjectName = issuerName;
     BigInteger serial = BigInteger.valueOf(new Random().nextInt());
 
-    X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerName, serial, NOT_BEFORE, NOT_AFTER, subjectName, publicKey);
-    builder.addExtension(Extension.subjectKeyIdentifier, false, createSubjectKeyIdentifier(publicKey));
-    builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
+    X509v3CertificateBuilder x509v3CertificateBuilder = new JcaX509v3CertificateBuilder(issuerName, serial, NOT_BEFORE, NOT_AFTER, subjectName, publicKey);
+    x509v3CertificateBuilder.addExtension(Extension.subjectKeyIdentifier, false, createSubjectKeyIdentifier(publicKey));
+    x509v3CertificateBuilder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
 
-    KeyUsage usage = new KeyUsage(KeyUsage.keyCertSign | KeyUsage.digitalSignature | KeyUsage.keyEncipherment | KeyUsage.dataEncipherment | KeyUsage.cRLSign);
-    builder.addExtension(Extension.keyUsage, false, usage);
+    KeyUsage keyUsage = new KeyUsage(KeyUsage.keyCertSign | KeyUsage.digitalSignature | KeyUsage.keyEncipherment | KeyUsage.dataEncipherment | KeyUsage.cRLSign);
+    x509v3CertificateBuilder.addExtension(Extension.keyUsage, false, keyUsage);
 
     ASN1EncodableVector purposes = new ASN1EncodableVector();
     purposes.add(KeyPurposeId.id_kp_serverAuth);
     purposes.add(KeyPurposeId.id_kp_clientAuth);
     purposes.add(KeyPurposeId.anyExtendedKeyUsage);
-    builder.addExtension(Extension.extendedKeyUsage, false, new DERSequence(purposes));
+    x509v3CertificateBuilder.addExtension(Extension.extendedKeyUsage, false, new DERSequence(purposes));
 
-    X509Certificate cert = signCertificate(builder, privateKey);
-    cert.checkValidity(new Date());
-    cert.verify(publicKey);
+    X509Certificate x509Certificate = signCertificate(x509v3CertificateBuilder, privateKey);
+    x509Certificate.checkValidity(new Date());
+    x509Certificate.verify(publicKey);
 
-    return cert;
+    return x509Certificate;
   }
 }
