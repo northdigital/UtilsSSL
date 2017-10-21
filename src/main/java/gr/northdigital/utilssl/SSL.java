@@ -4,16 +4,14 @@ import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.openssl.PEMReader;
+import sun.security.tools.keytool.CertAndKeyGen;
+import sun.security.x509.X500Name;
 
 import javax.crypto.Cipher;
 import java.io.*;
-import java.security.Key;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.cert.CertificateExpiredException;
-import java.security.cert.CertificateNotYetValidException;
+import java.security.*;
+import java.security.cert.*;
+import java.util.Date;
 import java.util.Enumeration;
 
 public class SSL {
@@ -214,5 +212,31 @@ public class SSL {
     }
 
     return new String(dectyptedText);
+  }
+
+  public static KeyStore createKeyStore(String path, String password) throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException, InvalidKeyException, NoSuchProviderException, SignatureException {
+    KeyPairGenerator rsaKeyGen = KeyPairGenerator.getInstance("RSA");
+    SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG", "SUN");
+    rsaKeyGen.initialize(512, secureRandom);
+    KeyPair keyPair = rsaKeyGen.genKeyPair();
+
+    CertAndKeyGen certAndKeyGen = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
+    certAndKeyGen.generate(512);
+
+    X509Certificate[] chain = new X509Certificate[1];
+    X500Name x500Name = new X500Name("root.CA", "", "", "", "", "");
+    chain[0] = certAndKeyGen.getSelfCertificate(x500Name, new Date(), (long) 100000 * 24 * 60 * 60);
+
+    KeyStore keyStore;
+    keyStore = KeyStore.getInstance("JKS");
+    keyStore.load(null);
+
+    keyStore.setKeyEntry("root.pk", keyPair.getPrivate(), "sporades".toCharArray(), chain);
+
+    FileOutputStream out = new FileOutputStream("C:\\Users\\Panagiotis\\Desktop\\ssl\\test.jks");
+    keyStore.store(out, "sporades".toCharArray());
+    out.close();
+
+    return keyStore;
   }
 }
