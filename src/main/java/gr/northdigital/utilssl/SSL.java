@@ -217,18 +217,22 @@ public class SSL {
     fileOutputStream.close();
   }
 
-  public static void addKeyPair(KeyStore keyStore, String name, String password) throws Exception {
+  private static final int KEY_SIZE = 1024;
+
+  public static KeyPair addKeyPair(KeyStore keyStore, String name, String password) throws Exception {
     X509Certificate[] chain = new X509Certificate[1];
 
     KeyPairGenerator rsaKeyGen = KeyPairGenerator.getInstance("RSA");
     SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG", "SUN");
-    rsaKeyGen.initialize(4096, secureRandom);
+    rsaKeyGen.initialize(KEY_SIZE, secureRandom);
     KeyPair keyPair = rsaKeyGen.genKeyPair();
 
     X509Certificate x509Certificate = CACertBuilder.createCACert(keyPair.getPublic(), keyPair.getPrivate(), name);
     chain[0] = x509Certificate;
 
     keyStore.setKeyEntry(name + ".pk", keyPair.getPrivate(), password.toCharArray(), chain);
+
+    return keyPair;
   }
 
   public static KeyStore createKeyStore(String path, String password) throws Exception {
@@ -237,8 +241,22 @@ public class SSL {
     keyStore.load(null);
 
     addKeyPair(keyStore, "root", "sporades");
-    saveKeyStore(keyStore, path, password);
 
     return keyStore;
+  }
+
+  public static X509Certificate createUserCertificate(KeyStore keyStore, String name) throws Exception {
+    KeyPairGenerator rsaKeyGen = KeyPairGenerator.getInstance("RSA");
+    SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG", "SUN");
+    rsaKeyGen.initialize(KEY_SIZE, secureRandom);
+    KeyPair keyPair = rsaKeyGen.genKeyPair();
+    PublicKey publicKey = keyPair.getPublic();
+
+    X509Certificate caCertificate = (X509Certificate) keyStore.getCertificate("root.pk");
+    PrivateKey privateKey = (PrivateKey) keyStore.getKey("root.pk", "sporades".toCharArray());
+
+    X509Certificate x509Certificate = IntermediateCertBuilder.createIntermediateCert(publicKey, privateKey, caCertificate, name);
+
+    return x509Certificate;
   }
 }

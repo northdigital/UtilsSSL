@@ -55,7 +55,7 @@ public class CACertBuilder {
    * Create a certificate to use by a Certificate Authority, signed by a self signed certificate.
    */
   public static X509Certificate createCACert(PublicKey publicKey, PrivateKey privateKey, String name) throws Exception {
-    X500Name issuerName = new X500Name("CN=" + name + ".ca");
+    X500Name issuerName = new X500Name("CN=" + name+ ".ca");
     X500Name subjectName = issuerName;
     BigInteger serial = BigInteger.valueOf(new Random().nextInt());
 
