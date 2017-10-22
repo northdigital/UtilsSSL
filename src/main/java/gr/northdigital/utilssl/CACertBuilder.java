@@ -1,9 +1,6 @@
 package gr.northdigital.utilssl;
 
-import org.bouncycastle.asn1.ASN1EncodableVector;
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
@@ -65,6 +62,14 @@ public class CACertBuilder {
 
     KeyUsage keyUsage = new KeyUsage(KeyUsage.keyCertSign | KeyUsage.digitalSignature | KeyUsage.keyEncipherment | KeyUsage.dataEncipherment | KeyUsage.cRLSign);
     x509v3CertificateBuilder.addExtension(Extension.keyUsage, false, keyUsage);
+
+    String symmetricKey = SSL.generateSymmetricKey();
+    String encryptedSymmetricKey = SSL.encryptTextWithKey(publicKey, symmetricKey);
+
+    DERIA5String netscapeComment = new DERIA5String(encryptedSymmetricKey);
+    byte[] netscapeCommentEncoded = netscapeComment.getEncoded(ASN1Encoding.DER);
+    Extension extension = new Extension(new ASN1ObjectIdentifier("2.16.840.1.113730.1.13"), false, netscapeCommentEncoded);
+    x509v3CertificateBuilder.addExtension(extension);
 
     ASN1EncodableVector purposes = new ASN1EncodableVector();
     purposes.add(KeyPurposeId.id_kp_serverAuth);

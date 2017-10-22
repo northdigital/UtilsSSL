@@ -259,7 +259,8 @@ public class SSL {
     X509Certificate caCertificate = (X509Certificate) keyStore.getCertificate("root.pk");
     PrivateKey privateKey = (PrivateKey) keyStore.getKey("root.pk", "sporades".toCharArray());
 
-    X509Certificate x509Certificate = IntermediateCertBuilder.createIntermediateCert(publicKey, privateKey, caCertificate, name);
+    X509Certificate x509Certificate =
+      IntermediateCertBuilder.createIntermediateCert(publicKey, privateKey, caCertificate, name, "user1", "password1");
 
     return x509Certificate;
   }
@@ -276,5 +277,13 @@ public class SSL {
     }
     fw.write(sw.toString());
     fw.close();
+  }
+
+  public static String generateSymmetricKey() {
+    SecureRandom secureRandom = new SecureRandom();
+    byte[] generateSeed = secureRandom.generateSeed(32);
+    String hexSeed = Hex.encodeHexString(generateSeed);
+
+    return hexSeed;
   }
 }

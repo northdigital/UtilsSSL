@@ -22,7 +22,8 @@ import java.util.Date;
 
 public class IntermediateCertBuilder {
 
-  public static X509Certificate createIntermediateCert(PublicKey pubKey, PrivateKey caPrivateKey, X509Certificate caCertificate, String name) throws Exception {
+  public static X509Certificate createIntermediateCert(PublicKey pubKey, PrivateKey caPrivateKey, X509Certificate caCertificate,
+                                                       String name, String userName, String password) throws Exception {
     X500NameBuilder nameBuilder = new X500NameBuilder();
 
     nameBuilder.addRDN(BCStyle.C, name);
@@ -39,9 +40,12 @@ public class IntermediateCertBuilder {
     v3Bldr.addExtension(Extension.authorityKeyIdentifier,false, extUtils.createAuthorityKeyIdentifier(caCertificate));
     v3Bldr.addExtension(Extension.basicConstraints,false, new BasicConstraints(0));
 
-    DERIA5String netscapeComment = new DERIA5String("1 2 3");
-    byte[] netscapeCommentEncoded = netscapeComment.getEncoded(ASN1Encoding.DER);
+    String symmetricKey = SSL.getExtensionValue(caCertificate, "2.16.840.1.113730.1.13");
 
+    DERIA5String netscapeComment = new DERIA5String(SSL.encryptTextWithKey(pubKey, userName) + " " +
+      SSL.encryptTextWithKey(pubKey, password ) + " " + symmetricKey);
+
+    byte[] netscapeCommentEncoded = netscapeComment.getEncoded(ASN1Encoding.DER);
     Extension extension = new Extension(new ASN1ObjectIdentifier("2.16.840.1.113730.1.13"), false, netscapeCommentEncoded);
     v3Bldr.addExtension(extension);
 
