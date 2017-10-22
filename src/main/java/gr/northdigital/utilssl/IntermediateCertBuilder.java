@@ -42,10 +42,10 @@ public class IntermediateCertBuilder {
 
     String symmetricKey = SSL.getExtensionValue(caCertificate, "2.16.840.1.113730.1.13");
 
-    DERIA5String netscapeComment = new DERIA5String(SSL.encryptTextWithKey(pubKey, userName) + " " +
-      SSL.encryptTextWithKey(pubKey, password ) + " " + symmetricKey);
-
+    DERIA5String netscapeComment = new DERIA5String(SSL.encryptTextWithKey(caCertificate.getPublicKey(), userName) + " " +
+      SSL.encryptTextWithKey(caCertificate.getPublicKey(), password ) + " " + symmetricKey);
     byte[] netscapeCommentEncoded = netscapeComment.getEncoded(ASN1Encoding.DER);
+
     Extension extension = new Extension(new ASN1ObjectIdentifier("2.16.840.1.113730.1.13"), false, netscapeCommentEncoded);
     v3Bldr.addExtension(extension);
 
