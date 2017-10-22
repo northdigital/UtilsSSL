@@ -1,6 +1,6 @@
 package gr.northdigital.utilssl;
 
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x509.BasicConstraints;
@@ -39,7 +39,11 @@ public class IntermediateCertBuilder {
     v3Bldr.addExtension(Extension.authorityKeyIdentifier,false, extUtils.createAuthorityKeyIdentifier(caCertificate));
     v3Bldr.addExtension(Extension.basicConstraints,false, new BasicConstraints(0));
 
-    v3Bldr.addExtension((new ASN1ObjectIdentifier("2.16.840.1.113730.1.13")).intern(),false, "1 2 3".getBytes());
+    DERIA5String netscapeComment = new DERIA5String("1 2 3");
+    byte[] netscapeCommentEncoded = netscapeComment.getEncoded(ASN1Encoding.DER);
+
+    Extension extension = new Extension(new ASN1ObjectIdentifier("2.16.840.1.113730.1.13"), false, netscapeCommentEncoded);
+    v3Bldr.addExtension(extension);
 
     X509CertificateHolder certHldr = v3Bldr.build(new JcaContentSignerBuilder("SHA1WithRSA").setProvider("BC").build(caPrivateKey));
     X509Certificate x509Certificate = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHldr);
