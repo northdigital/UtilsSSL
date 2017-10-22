@@ -244,12 +244,13 @@ public class SSL {
     keyStore = KeyStore.getInstance("JKS");
     keyStore.load(null);
 
-    addKeyPair(keyStore, "root", "sporades");
+    addKeyPair(keyStore, "root", password);
 
     return keyStore;
   }
 
-  public static X509Certificate createUserCertificate(KeyStore keyStore, String name) throws Exception {
+  public static X509Certificate createUserCertificate(KeyStore keyStore, String keyStorePassword, String name, String userName,
+                                                      String password) throws Exception {
     KeyPairGenerator rsaKeyGen = KeyPairGenerator.getInstance("RSA");
     SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG", "SUN");
     rsaKeyGen.initialize(KEY_SIZE, secureRandom);
@@ -257,10 +258,10 @@ public class SSL {
     PublicKey publicKey = keyPair.getPublic();
 
     X509Certificate caCertificate = (X509Certificate) keyStore.getCertificate("root.pk");
-    PrivateKey privateKey = (PrivateKey) keyStore.getKey("root.pk", "sporades".toCharArray());
+    PrivateKey privateKey = (PrivateKey) keyStore.getKey("root.pk", keyStorePassword.toCharArray());
 
     X509Certificate x509Certificate =
-      IntermediateCertBuilder.createIntermediateCert(publicKey, privateKey, caCertificate, name, "user1", "password1");
+      IntermediateCertBuilder.createIntermediateCert(publicKey, privateKey, caCertificate, name, userName, password);
 
     return x509Certificate;
   }

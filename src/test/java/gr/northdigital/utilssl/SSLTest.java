@@ -16,8 +16,10 @@ public class SSLTest {
     KeyStore keyStore = SSL.createKeyStore(BASE_PATH + "test.jks", "sporades");
     SSL.saveKeyStore(keyStore,BASE_PATH + "keys.jks", "sporades");
 
-    X509Certificate user1cer = SSL.createUserCertificate(keyStore, "user1");
+    X509Certificate user1cer = SSL.createUserCertificate(keyStore, "sporades","user1", "user1", "pssword1");
     SSL.saveCertificate(user1cer, BASE_PATH + "user1.cer");
+    X509Certificate user2cer = SSL.createUserCertificate(keyStore, "sporades","user2", "user2", "pssword2");
+    SSL.saveCertificate(user2cer, BASE_PATH + "user2.cer");
 
     Assert.assertTrue(true);
   }
