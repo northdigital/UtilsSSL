@@ -14,7 +14,7 @@ public class SSLTest {
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
     KeyStore keyStore = SSL.createKeyStore(BASE_PATH + "test.jks", "sporades");
-    SSL.saveKeyStore(keyStore,BASE_PATH + "test.jks", "sporades");
+    SSL.saveKeyStore(keyStore,BASE_PATH + "keys.jks", "sporades");
 
     X509Certificate user1cer = SSL.createUserCertificate(keyStore, "user1");
     SSL.saveCertificate(user1cer, BASE_PATH + "user1.cer");
