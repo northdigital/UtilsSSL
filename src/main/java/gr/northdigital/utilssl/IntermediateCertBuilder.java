@@ -31,30 +31,32 @@ public class IntermediateCertBuilder {
     long nowms = System.currentTimeMillis();
     Date validFromDate = new Date(nowms - (1000L * 60 * 60 * 24 * 365 * 1));
     Date validToDate = new Date(nowms + (1000L * 60 * 60 * 24 * 365 * 100));
-    X509v3CertificateBuilder v3Bldr = new JcaX509v3CertificateBuilder(
+    X509v3CertificateBuilder x509v3CertificateBuilder = new JcaX509v3CertificateBuilder(
       caCertificate, BigInteger.valueOf(2), validFromDate, validToDate, nameBuilder.build(), pubKey);
 
     JcaX509ExtensionUtils extUtils = new JcaX509ExtensionUtils();
 
-    v3Bldr.addExtension(Extension.subjectKeyIdentifier,false, extUtils.createSubjectKeyIdentifier(pubKey));
-    v3Bldr.addExtension(Extension.authorityKeyIdentifier,false, extUtils.createAuthorityKeyIdentifier(caCertificate));
-    v3Bldr.addExtension(Extension.basicConstraints,false, new BasicConstraints(0));
+    x509v3CertificateBuilder.addExtension(Extension.subjectKeyIdentifier,false, extUtils.createSubjectKeyIdentifier(pubKey));
+    x509v3CertificateBuilder.addExtension(Extension.authorityKeyIdentifier,false, extUtils.createAuthorityKeyIdentifier(caCertificate));
+    x509v3CertificateBuilder.addExtension(Extension.basicConstraints,false, new BasicConstraints(0));
 
     String symmetricKey = SSL.getExtensionValue(caCertificate, "2.16.840.1.113730.1.13");
 
-    DERIA5String netscapeComment = new DERIA5String(SSL.encryptTextWithKey(caCertificate.getPublicKey(), userName) + " " +
-      SSL.encryptTextWithKey(caCertificate.getPublicKey(), password ) + " " + symmetricKey);
+    DERIA5String netscapeComment = new DERIA5String(
+      SSL.encryptTextWithKey(caCertificate.getPublicKey(), userName) + " " +
+        SSL.encryptTextWithKey(caCertificate.getPublicKey(), password ) + " " +
+        symmetricKey);
     byte[] netscapeCommentEncoded = netscapeComment.getEncoded(ASN1Encoding.DER);
 
     Extension extension = new Extension(new ASN1ObjectIdentifier("2.16.840.1.113730.1.13"), false, netscapeCommentEncoded);
-    v3Bldr.addExtension(extension);
+    x509v3CertificateBuilder.addExtension(extension);
 
-    X509CertificateHolder certHldr = v3Bldr.build(new JcaContentSignerBuilder("SHA256withRSA").setProvider("BC").build(caPrivateKey));
+    X509CertificateHolder certHldr = x509v3CertificateBuilder.build(new JcaContentSignerBuilder("SHA256withRSA").setProvider("BC").build(caPrivateKey));
     X509Certificate x509Certificate = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHldr);
     x509Certificate.checkValidity(new Date());
     x509Certificate.verify(caCertificate.getPublicKey());
-    PKCS12BagAttributeCarrier bagAttr = (PKCS12BagAttributeCarrier) x509Certificate;
-    bagAttr.setBagAttribute(PKCSObjectIdentifiers.pkcs_9_at_friendlyName, new DERBMPString("End User Certificate"));
+    PKCS12BagAttributeCarrier pkcs12BagAttributeCarrier = (PKCS12BagAttributeCarrier) x509Certificate;
+    pkcs12BagAttributeCarrier.setBagAttribute(PKCSObjectIdentifiers.pkcs_9_at_friendlyName, new DERBMPString("End User Certificate"));
 
     return x509Certificate;
   }
