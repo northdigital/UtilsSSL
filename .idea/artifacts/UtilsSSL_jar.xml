@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="UtilsSSL:jar">
+    <output-path>$PROJECT_DIR$/classes/artifacts/UtilsSSL_jar</output-path>
+    <root id="archive" name="UtilsSSL.jar">
+      <element id="module-output" name="UtilsSSL" />
+    </root>
+  </artifact>
+</component>
