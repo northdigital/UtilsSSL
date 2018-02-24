@@ -75,6 +75,7 @@ public class SSL {
 
   /**
    * Return true if the certificate is self signed.
+   * For root certificate the CN is also the issuer of the certificate.
    *
    * @param x509Certificate
    * @return
@@ -88,6 +89,10 @@ public class SSL {
 
   /**
    * Returns true if the certificate is self signed and valid.
+   * The certificate must already be self signed or exception is thrown.
+   * A self sign certificate signs its self.
+   * So the private key used to sign it corresponts to the public key of the certificate.
+   * When not self signed the private key belongs to a CA authority that signed the certificate.
    *
    * @param x509Certificate
    * @return
@@ -117,6 +122,7 @@ public class SSL {
     if (isSelfSignedCertificate(x509Certificate))
       return false;
 
+    // checks if the certificate expired
     try {
       x509Certificate.checkValidity();
     } catch (CertificateExpiredException e) {
@@ -134,17 +140,22 @@ public class SSL {
 
       String nextCertificateSubjectDN = nextCertificate.getSubjectDN().getName();
 
+      // we found the issuer of the x509Certificate certificate
       if (nextCertificateSubjectDN.equals(issuerDN)) {
         try {
+          // if the issuer is a self signed certificate check if not expired and return true or false otherwise
           if (isSelfSignedCertificate(nextCertificate)) {
             if (!isSelfSignedCertificateValid(nextCertificate))
               return false;
+            // otherwise, if not self signed, check if it's valid (recursion)
           } else if (!isValidCertificate(nextCertificate, keyStore)) {
             return false;
           }
 
+          // nextCertificate is valid, check if it signed x509Certificate
           x509Certificate.verify(nextCertificate.getPublicKey());
 
+          //x509Certificate is signed by a valid certificate in chain
           return true;
         } catch (Exception ex) {
           return false;
@@ -204,10 +215,8 @@ public class SSL {
     byte[] dectyptedText = null;
     try {
       final Cipher cipher = Cipher.getInstance("RSA");
-
       cipher.init(Cipher.DECRYPT_MODE, key);
       dectyptedText = cipher.doFinal(Hex.decodeHex(text.toCharArray()));
-
     } catch (Exception ex) {
       ex.printStackTrace();
     }
@@ -239,7 +248,7 @@ public class SSL {
     return keyPair;
   }
 
-  public static KeyStore createKeyStore(String path, String password) throws Exception {
+  public static KeyStore createKeyStore(String password) throws Exception {
     KeyStore keyStore;
     keyStore = KeyStore.getInstance("JKS");
     keyStore.load(null);

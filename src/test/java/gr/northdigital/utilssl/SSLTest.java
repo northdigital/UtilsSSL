@@ -13,7 +13,7 @@ public class SSLTest {
   public void test1() throws Exception {
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
-    KeyStore keyStore = SSL.createKeyStore(BASE_PATH + "test.jks", "sporades");
+    KeyStore keyStore = SSL.createKeyStore("sporades");
     SSL.saveKeyStore(keyStore,BASE_PATH + "keys.jks", "sporades");
 
     X509Certificate user1cer = SSL.createUserCertificate(keyStore, "sporades","user1", "user1", "password1");
